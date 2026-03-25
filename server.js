@@ -4,9 +4,9 @@ const fs = require('fs');
 const axios = require('axios');
 const FormData = require('form-data');
 
-const BOT_TOKEN = 'сюда_токен_бота';
-const API_ID = 1234567;
-const API_HASH = 'сюда_api_hash';
+const BOT_TOKEN = '8273534923:AAGJpRJOzwfjQ14wZtclCKKinSfiwlDnKbM';
+const API_ID = 23721778;
+const API_HASH = '7935a656311ab4e500294b22d6b6c7f6';
 const ADMIN_ID = 6307490597;
 
 const bot = new Telegraf(BOT_TOKEN);
