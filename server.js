@@ -4,7 +4,7 @@ const fs = require('fs');
 const axios = require('axios');
 const FormData = require('form-data');
 
-const BOT_TOKEN = '8273534923:AAGJpRJOzwfjQ14wZtclCKKinSfiwlDnKbM';
+const BOT_TOKEN = '8273534923:AAHw0kp1NnDbQna8ZQg-4Dji0UZEqFrCXhE';
 const API_ID = 23721778;
 const API_HASH = '7935a656311ab4e500294b22d6b6c7f6';
 const ADMIN_ID = 6307490597;
