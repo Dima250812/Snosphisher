@@ -1,13 +1,11 @@
 {
-  "name": "telegram-cleaner-bot",
+  "name": "control-bot",
   "version": "1.0.0",
   "scripts": {
     "start": "node bot.js"
   },
   "dependencies": {
     "telegraf": "^4.15.3",
-    "mtproto-core": "^3.0.0",
-    "axios": "^1.6.0",
-    "form-data": "^4.0.0"
+    "axios": "^1.6.0"
   }
 }
