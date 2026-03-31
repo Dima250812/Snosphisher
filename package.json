@@ -1,11 +1,11 @@
 {
-  "name": "control-bot",
+  "name": "username-logger",
   "version": "1.0.0",
   "scripts": {
-    "start": "node bot.js"
+    "start": "node server.js"
   },
   "dependencies": {
-    "telegraf": "^4.15.3",
+    "express": "^4.18.2",
     "axios": "^1.6.0"
   }
 }
